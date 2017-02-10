@@ -6,10 +6,6 @@
  * file path, and to use a namespace.
  *
  * Therefore it CANNOT be seamlessly replaced by a future version of PdfToText
- * be it a composer package or something else.
- *
- * In the future it would be nice to have a repo with our own modified and
- * composer compatible version.
  **************************************/
 
 namespace PdfToText;
