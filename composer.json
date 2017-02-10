@@ -1,0 +1,16 @@
+{
+    "name": "jespers/pdf-to-text",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Jesper Sørensen",
+            "email": "jeppester1@gmail.com"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "PdfToText\\": "/"
+        }
+    }
+}

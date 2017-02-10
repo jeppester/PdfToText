@@ -1,4 +1,23 @@
 <?php
+
+/**************************************
+ * IMPORTANT!:
+ * This file has been modified to use a content string as input instead of a
+ * file path, and to use a namespace.
+ *
+ * Therefore it CANNOT be seamlessly replaced by a future version of PdfToText
+ * be it a composer package or something else.
+ *
+ * In the future it would be nice to have a repo with our own modified and
+ * composer compatible version.
+ **************************************/
+
+namespace PdfToText;
+
+use Exception;
+use ArrayAccess;
+use Countable;
+
 /**************************************************************************************************************
 
     NAME
@@ -41,7 +60,7 @@
 
   ==============================================================================================================*/
 class  PdfToTextException		extends  Exception
-   { 
+   {
 	public static	$IsObject		=  false ;
 
 	public function  __construct ( $message, $object_id = false )
@@ -94,8 +113,8 @@ if  ( ! function_exists ( 'error' ) )
 //	This function appeared only in version 5.4.0
 if  ( ! function_exists ( 'hex2bin' ) )
    {
-	function  hex2bin  ( $hexstring ) 
-	   { 
+	function  hex2bin  ( $hexstring )
+	   {
 		$length		=  strlen ( $hexstring ) ;
 		$binstring	=  '' ;
 		$index		=  0 ;
@@ -110,7 +129,7 @@ if  ( ! function_exists ( 'hex2bin' ) )
 		    }
 
 		return ( $binstring ) ;
-	    } 
+	    }
 
     }
 
@@ -144,29 +163,29 @@ abstract class  PdfObjectBase		// extends  Object
 
 
 	public function  __construct ( )
-	   { 
-		// parent::__construct ( ) ; 
+	   {
+		// parent::__construct ( ) ;
 	    }
 
 
  	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        CodePointToUtf8 - Encodes a Unicode codepoint to UTF8.
-	
+
 	    PROTOTYPE
 	        $char	=  $this -> CodePointToUtf8 ( $code ) ;
-	
+
 	    DESCRIPTION
 	        Encodes a Unicode codepoint to UTF8, trying to handle all possible cases.
-	
+
 	    PARAMETERS
 	        $code (integer) -
 	                Unicode code point to be translated.
-	
+
 	    RETURN VALUE
 	        A string that contains the UTF8 bytes representing the Unicode code point.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	protected function  CodePointToUtf8 ( $code )
 	   {
@@ -190,7 +209,7 @@ abstract class  PdfObjectBase		// extends  Object
 			   {
 				return ( PdfToText::$Utf8Placeholder ) ;
 			    }
-			else 
+			else
 				return ( sprintf ( PdfToText::$Utf8Placeholder, $code ) ) ;
 		    }
 	    }
@@ -244,20 +263,20 @@ abstract class  PdfObjectBase		// extends  Object
 		encountered somewhere in the PDF file :
 
 		- PDF_LZW-ENCODING :
-			a filter based on LZW Compression; it can use one of two groups of predictor functions for more 
-			compact LZW compression : Predictor 2 from the TIFF 6.0 specification and predictors (filters) 
+			a filter based on LZW Compression; it can use one of two groups of predictor functions for more
+			compact LZW compression : Predictor 2 from the TIFF 6.0 specification and predictors (filters)
 			from the PNG specification
 
 		- PDF_RLE_ENCODING :
-			a simple compression method for streams with repetitive data using the run-length encoding 
+			a simple compression method for streams with repetitive data using the run-length encoding
 			algorithm and the image-specific filters.
 
 		PDF_CCITT_FAX_ENCODING :
-			a lossless bi-level (black/white) filter based on the Group 3 or Group 4 CCITT (ITU-T) fax 
+			a lossless bi-level (black/white) filter based on the Group 3 or Group 4 CCITT (ITU-T) fax
 			compression standard defined in ITU-T T.4 and T.6.
 
 		PDF_JBIG2_ENCODING :
-			a lossy or lossless bi-level (black/white) filter based on the JBIG2 standard, introduced in 
+			a lossy or lossless bi-level (black/white) filter based on the JBIG2 standard, introduced in
 			PDF 1.4.
 
 		PDF_JPX_ENCODING :
@@ -282,8 +301,8 @@ abstract class  PdfObjectBase		// extends  Object
 			case	'ccittfaxdecode'	:  // return ( self::PDF_CCITT_FAX_ENCODING ) ;
 
 			case	'lzwdecode'		:
-			case	'runlengthdecode'	: 
-			case	'jbig2decode'		: 
+			case	'runlengthdecode'	:
+			case	'jbig2decode'		:
 			case	'jpxdecode'		:
 				if  ( PdfToText::$DEBUG  >  1 )
 					warning ( "Encoding type \"{$match [ 'encoding' ]}\" not yet implemented for pdf object #$object_id." ) ;
@@ -294,13 +313,13 @@ abstract class  PdfObjectBase		// extends  Object
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        GetObjectReferences - Gets object references from a specified construct.
-	
+
 	    PROTOTYPE
 	        $status		=  $this -> GetObjectReferences ( $object_id, $object_data, $searched_string, &$object_ids ) ;
-	
+
 	    DESCRIPTION
 	        Certain parameter specifications are followed by an object reference of the form :
 			x 0 R
@@ -308,7 +327,7 @@ abstract class  PdfObjectBase		// extends  Object
 			[x1 0 R x2 0 R ... xn 0 r]
 		Those kind of constructs can occur after parameters such as : /Pages, /Contents, /Kids...
 		This method extracts the object references found in such a construct.
-	
+
 	    PARAMETERS
 	        $object_id (integer) -
 	                Id of the object to be analyzed.
@@ -316,7 +335,7 @@ abstract class  PdfObjectBase		// extends  Object
 		$object_data (string) -
 			Object contents.
 
-		$searched_string (string) - 
+		$searched_string (string) -
 			String to be searched, that must be followed by an object or an array of object references.
 			This parameter can contain constructs used in regular expressions. Note however that the '#'
 			character must be escaped, since it is used as a delimiter in the regex that is applied on
@@ -324,11 +343,11 @@ abstract class  PdfObjectBase		// extends  Object
 
 		$object_ids (array of integers) -
 			Returns on output the ids of the pdf object that have been found after the searched string.
-	
+
 	    RETURN VALUE
 	        True if the searched string has been found and is followed by an object or array of object references,
 		false otherwise.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	protected function  GetObjectReferences ( $object_id, $object_data, $searched_string, &$object_ids )
 	   {
@@ -392,13 +411,13 @@ abstract class  PdfObjectBase		// extends  Object
 	   {
 		return ( stripos ( $decoded_data, 'begincmap' )  	!==  false  ||
 			 stripos ( $decoded_data, 'beginbfchar' )  	!==  false  ||		// "begincmap" does not seem to be mandatory...
-			 stripos ( $decoded_data, 'beginbfrange' )  	!==  false  ||	
+			 stripos ( $decoded_data, 'beginbfrange' )  	!==  false  ||
 			 stripos ( $decoded_data, '/Differences' )	!==  false ) ;
 	    }
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    IsFont -
 		Checks if the current object contents specify a font declaration.
 
@@ -410,11 +429,11 @@ abstract class  PdfObjectBase		// extends  Object
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    IsFontMap -
 		Checks if the code contains things like :
 			<</F1 26 0 R/F2 22 0 R/F3 18 0 R>>
-		which maps font 1 (when specified with the /Fx instruction) to object 26, 2 to object 22 and 3 to 
+		which maps font 1 (when specified with the /Fx instruction) to object 26, 2 to object 22 and 3 to
 		object 18, respectively, in the above example.
 
 	 *-------------------------------------------------------------------------------------------------------------*/
@@ -428,7 +447,7 @@ abstract class  PdfObjectBase		// extends  Object
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    IsImage -
 		Checks if the code contains things like :
 			/Subtype/Image
@@ -444,13 +463,13 @@ abstract class  PdfObjectBase		// extends  Object
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    IsObjectStream -
 		Checks if the code contains an object stream (/Type/ObjStm)
 			/Subtype/Image
 
 	 *-------------------------------------------------------------------------------------------------------------*/
-	protected function  IsObjectStream ( $object_data ) 
+	protected function  IsObjectStream ( $object_data )
 	   {
 		if  ( preg_match ( '#/Type \s* /ObjStm#isx', $object_data ) )
 			return ( true ) ;
@@ -555,7 +574,7 @@ class  PdfToText 	extends PdfObjectBase
 	const		PDFOPT_AUTOSAVE_IMAGES			=  0x0020 ;		// Autosave images ; the ImageFileTemplate will need to be defined
 
 	// Encryption standards (to be completed, as more crazy PDF samples arise...)
-	const		PDFCRYPT_NONE				=  0 ;			// PDF file is not encrypted 
+	const		PDFCRYPT_NONE				=  0 ;			// PDF file is not encrypted
 	const		PDFCRYPT_STANDARD			=  1 ;			// Standard security handler
 
 	// A 32-bytes hardcoded padding used when computing encryption keys
@@ -564,31 +583,31 @@ class  PdfToText 	extends PdfObjectBase
 	// Permission bits for encrypted files. Comments come from the PDF specification
 	const		PDFPERM_PRINT				=  0x0004 ;		// bit 3 :
 											//	(Revision 2) Print the document.
-											//	(Revision 3 or greater) Print the document (possibly not at the highest quality level, 
+											//	(Revision 3 or greater) Print the document (possibly not at the highest quality level,
 											//	depending on whether bit 12 is also set).
 	const		PDFPERM_MODIFY				=  0x0008 ;		// bit 4 :
 											//	Modify the contents of the document by operations other than those controlled by bits 6, 9, and 11.
 	const		PDFPERM_COPY				=  0x0010 ;		// bit 5 :
-											//	(Revision 2) Copy or otherwise extract text and graphics from the document, including extracting text 
+											//	(Revision 2) Copy or otherwise extract text and graphics from the document, including extracting text
 											//	and graphics (in support of accessibility to users with disabilities or for other purposes).
-											//	(Revision 3 or greater) Copy or otherwise extract text and graphics from the document by operations  
+											//	(Revision 3 or greater) Copy or otherwise extract text and graphics from the document by operations
 											//	other than that controlled by bit 10.
 	const		PDFPERM_MODIFY_EXTRA			=  0x0020 ;		// bit 6 :
-											//	Add or modify text annotations, fill in interactive form fields, and, if bit 4 is also set, 
+											//	Add or modify text annotations, fill in interactive form fields, and, if bit 4 is also set,
 											//	create or modify interactive form fields (including signature fields).
 	const		PDFPERM_FILL_FORM			=  0x0100 ;		// bit 9 :
-											//	(Revision 3 or greater) Fill in existing interactive form fields (including signature fields), 
+											//	(Revision 3 or greater) Fill in existing interactive form fields (including signature fields),
 											//	even if bit 6 is clear.
 	const		PDFPERM_EXTRACT				=  0x0200 ;		// bit 10 :
-											//	(Revision 3 or greater) Fill in existing interactive form fields (including signature fields), 
+											//	(Revision 3 or greater) Fill in existing interactive form fields (including signature fields),
 											//	even if bit 6 is clear.
 	const		PDFPERM_ASSEMBLE			=  0x0400 ;		// bit 11 :
-											//	(Revision 3 or greater) Assemble the document (insert, rotate, or delete pages and create bookmarks 
+											//	(Revision 3 or greater) Assemble the document (insert, rotate, or delete pages and create bookmarks
 											//	or thumbnail images), even if bit 4 is clear.
 	const		PDFPERM_HIGH_QUALITY_PRINT		=  0x0800 ;		// bit 12 :
-											//	(Revision 3 or greater) Print the document to a representation from which a faithful digital copy of 
-											//	the PDF content could be generated. When this bit is clear (and bit 3 is set), printing is limited to 
-											//	a low-level representation of the appearance, possibly of degraded quality. 
+											//	(Revision 3 or greater) Print the document to a representation from which a faithful digital copy of
+											//	the PDF content could be generated. When this bit is clear (and bit 3 is set), printing is limited to
+											//	a low-level representation of the appearance, possibly of degraded quality.
 
 	// When boolean true, outputs debug information about fonts, character maps and drawing contents.
 	// When integer > 1, outputs additional information about other objects.
@@ -622,7 +641,7 @@ class  PdfToText 	extends PdfObjectBase
 	public		$BlockSeparator			=  '' ;
 	// Separator used to separate text groups where the offset value is less than -1000 thousands of character units
 	// (eg : [(1)-1822(2)] will add a separator between the characters "1" and "2")
-	// Note that such values are expressed in thousands of text units and subtracted from the current position. A 
+	// Note that such values are expressed in thousands of text units and subtracted from the current position. A
 	// negative value means adding more space between the two text units it separates.
 	public		$Separator			=  ' ' ;
 	// Separator to be used between pages in the $Text property
@@ -637,7 +656,7 @@ class  PdfToText 	extends PdfObjectBase
 	public		$MaxSelectedPages		=  false ;
 	// Location of the CID tables directory
 	public static	$CIDTablesDirectory ;
-	// Author information 
+	// Author information
 	public		$Author				=  '' ;
 	public		$CreatorApplication		=  '' ;
 	public		$ProducerApplication		=  '' ;
@@ -648,8 +667,8 @@ class  PdfToText 	extends PdfObjectBase
 	// Unique and arbitrary file identifier, as specified in the PDF file
 	// Well, in fact, there are two IDs, but the PDF specification does not mention the goal of the second one
 	public		$ID				=  '' ;
-	public		$ID2				=  '' ; 
-	//Encryption-related properties 
+	public		$ID2				=  '' ;
+	//Encryption-related properties
 	public		$UserPassword			=  false ;
 	public		$OwnerPassword			=  false ;
 	public		$IsPasswordProtected		=  false ;	// Will be set to true is encryption information has been found
@@ -657,7 +676,7 @@ class  PdfToText 	extends PdfObjectBase
 	public		$EOL				=  PHP_EOL ;
 	// String to be used when no Unicode translation is possible
 	public static	$Utf8Placeholder		=  '' ;
-	// Information about memory consumption implied by the file currently being loaded 
+	// Information about memory consumption implied by the file currently being loaded
 	public		$MemoryUsage,
 			$MemoryPeakUsage ;
 	// Offset of the document start (%PDF-x.y)
@@ -676,8 +695,8 @@ class  PdfToText 	extends PdfObjectBase
 	// This is mainly used for variables such as $Utf8PlaceHolder, which is initialized to a different value
 	private static	$StaticInitialized		=  false ;
 
-	// Drawing instructions that are to be ignored and removed from a text stream before processing, for performance 
-	// reasons (it is faster to call preg_replace() once to remove them than calling the __next_instruction() and 
+	// Drawing instructions that are to be ignored and removed from a text stream before processing, for performance
+	// reasons (it is faster to call preg_replace() once to remove them than calling the __next_instruction() and
 	// __next_token() methods to process an input stream containing such useless instructions)
 	// This is an array of regular expressions where the following constructs are replaced at runtime during static
 	// initialization :
@@ -723,7 +742,7 @@ class  PdfToText 	extends PdfObjectBase
 	// characters, so the word gets joined on the same line. Spaces after the end of the word (on the next line)
 	// are removed, in order for the next word to appear at the beginning of the second line.
 	private static $RemoveHyphensRegex		=  '#
-								( 
+								(
 									  -
 									  [ \t]* ( (\r\n) | \n | \r )+ [ \t\r\n]*
 								 )
@@ -772,7 +791,7 @@ class  PdfToText 	extends PdfObjectBase
 	public		$EncryptMetadata		=  false ;			// Tells whether metadata has been encrypted or not (/EncryptMetadata flag)
 
 	// Computed encryption key
-	protected	$EncryptionKey			=  false ;		
+	protected	$EncryptionKey			=  false ;
 
 	// A subset of a character classification array that avoids too many calls to the ctype_* functions or too many
 	// character comparisons.
@@ -786,17 +805,17 @@ class  PdfToText 	extends PdfObjectBase
 
 	private static  $CharacterClass		=  array
 	   (
-		'a' => self::CTYPE_XALNUM, 'b' => self::CTYPE_XALNUM, 'c' => self::CTYPE_XALNUM, 'd' => self::CTYPE_XALNUM, 'e' => self::CTYPE_XALNUM, 'f' => self::CTYPE_XALNUM, 
-		'g' => self::CTYPE_ALNUM , 'h' => self::CTYPE_ALNUM , 'i' => self::CTYPE_ALNUM , 'j' => self::CTYPE_ALNUM , 'k' => self::CTYPE_ALNUM , 'l' => self::CTYPE_ALNUM , 
-		'm' => self::CTYPE_ALNUM , 'n' => self::CTYPE_ALNUM , 'o' => self::CTYPE_ALNUM , 'p' => self::CTYPE_ALNUM , 'q' => self::CTYPE_ALNUM , 'r' => self::CTYPE_ALNUM , 
-		's' => self::CTYPE_ALNUM , 't' => self::CTYPE_ALNUM , 'u' => self::CTYPE_ALNUM , 'v' => self::CTYPE_ALNUM , 'w' => self::CTYPE_ALNUM , 'x' => self::CTYPE_ALNUM , 
-		'y' => self::CTYPE_ALNUM , 'z' => self::CTYPE_ALNUM , 
-		'A' => self::CTYPE_XALNUM, 'B' => self::CTYPE_XALNUM, 'C' => self::CTYPE_XALNUM, 'D' => self::CTYPE_XALNUM, 'E' => self::CTYPE_XALNUM, 'F' => self::CTYPE_XALNUM, 
-		'G' => self::CTYPE_ALNUM , 'H' => self::CTYPE_ALNUM , 'I' => self::CTYPE_ALNUM , 'J' => self::CTYPE_ALNUM , 'K' => self::CTYPE_ALNUM , 'L' => self::CTYPE_ALNUM , 
-		'M' => self::CTYPE_ALNUM , 'N' => self::CTYPE_ALNUM , 'O' => self::CTYPE_ALNUM , 'P' => self::CTYPE_ALNUM , 'Q' => self::CTYPE_ALNUM , 'R' => self::CTYPE_ALNUM , 
-		'S' => self::CTYPE_ALNUM , 'T' => self::CTYPE_ALNUM , 'U' => self::CTYPE_ALNUM , 'V' => self::CTYPE_ALNUM , 'W' => self::CTYPE_ALNUM , 'X' => self::CTYPE_ALNUM , 
-		'Y' => self::CTYPE_ALNUM , 'Z' => self::CTYPE_ALNUM , 
-		'0' => self::CTYPE_XNUM  , '1' => self::CTYPE_XNUM  , '2' => self::CTYPE_XNUM  , '3' => self::CTYPE_XNUM  , '4' => self::CTYPE_XNUM  , '5' => self::CTYPE_XNUM  , 
+		'a' => self::CTYPE_XALNUM, 'b' => self::CTYPE_XALNUM, 'c' => self::CTYPE_XALNUM, 'd' => self::CTYPE_XALNUM, 'e' => self::CTYPE_XALNUM, 'f' => self::CTYPE_XALNUM,
+		'g' => self::CTYPE_ALNUM , 'h' => self::CTYPE_ALNUM , 'i' => self::CTYPE_ALNUM , 'j' => self::CTYPE_ALNUM , 'k' => self::CTYPE_ALNUM , 'l' => self::CTYPE_ALNUM ,
+		'm' => self::CTYPE_ALNUM , 'n' => self::CTYPE_ALNUM , 'o' => self::CTYPE_ALNUM , 'p' => self::CTYPE_ALNUM , 'q' => self::CTYPE_ALNUM , 'r' => self::CTYPE_ALNUM ,
+		's' => self::CTYPE_ALNUM , 't' => self::CTYPE_ALNUM , 'u' => self::CTYPE_ALNUM , 'v' => self::CTYPE_ALNUM , 'w' => self::CTYPE_ALNUM , 'x' => self::CTYPE_ALNUM ,
+		'y' => self::CTYPE_ALNUM , 'z' => self::CTYPE_ALNUM ,
+		'A' => self::CTYPE_XALNUM, 'B' => self::CTYPE_XALNUM, 'C' => self::CTYPE_XALNUM, 'D' => self::CTYPE_XALNUM, 'E' => self::CTYPE_XALNUM, 'F' => self::CTYPE_XALNUM,
+		'G' => self::CTYPE_ALNUM , 'H' => self::CTYPE_ALNUM , 'I' => self::CTYPE_ALNUM , 'J' => self::CTYPE_ALNUM , 'K' => self::CTYPE_ALNUM , 'L' => self::CTYPE_ALNUM ,
+		'M' => self::CTYPE_ALNUM , 'N' => self::CTYPE_ALNUM , 'O' => self::CTYPE_ALNUM , 'P' => self::CTYPE_ALNUM , 'Q' => self::CTYPE_ALNUM , 'R' => self::CTYPE_ALNUM ,
+		'S' => self::CTYPE_ALNUM , 'T' => self::CTYPE_ALNUM , 'U' => self::CTYPE_ALNUM , 'V' => self::CTYPE_ALNUM , 'W' => self::CTYPE_ALNUM , 'X' => self::CTYPE_ALNUM ,
+		'Y' => self::CTYPE_ALNUM , 'Z' => self::CTYPE_ALNUM ,
+		'0' => self::CTYPE_XNUM  , '1' => self::CTYPE_XNUM  , '2' => self::CTYPE_XNUM  , '3' => self::CTYPE_XNUM  , '4' => self::CTYPE_XNUM  , '5' => self::CTYPE_XNUM  ,
 		'6' => self::CTYPE_XNUM  , '7' => self::CTYPE_XNUM  , '8' => self::CTYPE_XNUM  , '9' => self::CTYPE_XNUM
 	    ) ;
 
@@ -905,17 +924,12 @@ class  PdfToText 	extends PdfObjectBase
 	                Optional PDF filename whose text contents are to be extracted.
 
 	 *-------------------------------------------------------------------------------------------------------------*/
-	public function  Load ( $filename, $user_password = false, $owner_password = false )
+	public function  Load ($contents, $user_password = false, $owner_password = false )
 	   {
 		$memory_usage_start		=  ( self::$HasMemoryGetUsage     ) ?  memory_get_usage      ( true ) : 0 ;
 		$memory_peak_usage_start	=  ( self::$HasMemoryGetPeakUsage ) ?  memory_get_peak_usage ( true ) : 0 ;
 
-		// Check if the file exists
-		if  ( ! file_exists ( $filename ) )
-			error ( new  PdfToTextException ( "File \"$filename\" does not exist." ) ) ;
-
-		// Load its contents
-		$contents 	=  file_get_contents ( $filename, FILE_BINARY ) ;
+        $filename = 'String';
 
 		// Search for the start of the document ("%PDF-x.y")
 		$start_offset	=  strpos ( $contents, '%PDF' ) ;
@@ -956,7 +970,7 @@ class  PdfToText 	extends PdfObjectBase
 		$this -> Title				=  '' ;
 		$this -> GotAuthorInformation		=  false ;
 		$this -> ID				=  '' ;
-		$this -> ID2				=  '' ; 
+		$this -> ID2				=  '' ;
 		$this -> UserPassword			=  $user_password ;
 		$this -> OwnerPassword			=  $owner_password ;
 		$this -> EncryptedUserPassword		=  false ;
@@ -976,7 +990,7 @@ class  PdfToText 	extends PdfObjectBase
 		$this -> MapIdBuffer			=  array ( ) ;
 		$this -> RtlCharacterBuffer		=  array ( ) ;
 
-		// Debug statistics 
+		// Debug statistics
 		$this -> Statistics			=  array
 		   (
 			'TextSize'			=>  0,				// Total size of drawing instructions ("text" objects)
@@ -997,7 +1011,7 @@ class  PdfToText 	extends PdfObjectBase
 
 		// We put a particular attention in treating errors returned by preg_match_all() here, since we need to be really sure why we did not
 		// find any PDF object in the supplied contents
-		if  ( ! $status ) 
+		if  ( ! $status )
 		   {
 			$preg_error	=  preg_last_error ( ) ;
 
@@ -1038,7 +1052,7 @@ class  PdfToText 	extends PdfObjectBase
 		$pdf_objects	=  array ( ) ;
 
 		for  ( $i = 0, $count = count ( $matches [ 'object_id' ] ) ; $i  <  $count ; $i ++ )
-			$pdf_objects [ $matches [ 'object_id' ] [$i] ]	=  $matches [ 'object' ] [$i] ;		
+			$pdf_objects [ $matches [ 'object_id' ] [$i] ]	=  $matches [ 'object' ] [$i] ;
 
 		// Extract trailer information, which may contain the ID of an object specifying encryption flags
 		$this -> GetTrailerInformation ( $contents ) ;
@@ -1063,7 +1077,7 @@ class  PdfToText 	extends PdfObjectBase
 			// Get the last object on the stack, which represents the objects to process in the most inner level of recursion
 			$current_stacked_object		=  $object_stack [ $object_stack_count - 1 ] ;
 			$object_matches			=  $current_stacked_object [ 'matches' ] ;
-			$start_index			=  $current_stacked_object [ 'index' ] ; 
+			$start_index			=  $current_stacked_object [ 'index' ] ;
 
 			// Loop through the objects
 			for ( $i = $start_index, $object_match_count = count ( $object_matches [ 'object' ] ) ; $i  <  $object_match_count ; $i ++ )
@@ -1095,14 +1109,14 @@ class  PdfToText 	extends PdfObjectBase
 				$this -> PageMap -> Peek ( $object_number, $object_data, $pdf_objects ) ;
 
 				// Check if the object contais authoring information - it can appear encoded or unencoded
-				if  ( ! $this -> GotAuthorInformation ) 
+				if  ( ! $this -> GotAuthorInformation )
 					$this -> PeekAuthorInformation ( $object_number, $object_data ) ;
 
 				// Also catch the object encoding type
 				$type 		=  $this -> GetEncodingType ( $object_number, $object_data ) ;
 				$stream_match	=  null ;
 
-				if  ( strpos ( $object_data, 'stream' )  ===  false  ||  
+				if  ( strpos ( $object_data, 'stream' )  ===  false  ||
 						! preg_match ( '#[^/] stream \s+ (?P<stream> .*?) endstream#imsx', $object_data, $stream_match ) )
 				   {
 					// Some font definitions are in clear text in an object, some are encoded in a stream within the object
@@ -1129,7 +1143,7 @@ class  PdfToText 	extends PdfObjectBase
 						//continue ;
 					    }
 					// Ignore other objects that do not contain an encoded stream
-		   			else 
+		   			else
 					   {
 						if  ( self::$DEBUG  >  1 )
 							echo "\n----------------------------------- UNSTREAMED #$object_number\n$object_data" ;
@@ -1151,7 +1165,7 @@ class  PdfToText 	extends PdfObjectBase
 					if  ( ! $stream_match )
 						continue ;
 				    }
-				   
+
 				// Check if the stream contains data (yes, I have found a sample that had streams of length 0...)
 				// In other words : ignore empty streams
 				if  ( stripos ( $object_data, '/Length 0' )  !==  false )
@@ -1197,7 +1211,7 @@ class  PdfToText 	extends PdfObjectBase
 					// We currently ignore page headers and footers
 					if  ( ! $this -> IsPageHeaderOrFooter ( $decoded_stream_data ) )
 					   {
-						$text [ $object_number ]	=  
+						$text [ $object_number ]	=
 						$text_data			=  $decoded_stream_data ;
 					    }
 					// However, they may be mixed with actual text contents so we need to separate them...
@@ -1208,13 +1222,13 @@ class  PdfToText 	extends PdfObjectBase
 						// We still need to check again that the extracted text portion contains something useful
 						if  ( $this -> IsText ( $object_data, $remainder ) )
 						   {
-							$text [ $object_number ]	=  
+							$text [ $object_number ]	=
 							$text_data			=  $remainder ;
 						    }
 					    }
 
 					// The current object may be a text object that have been defined as an XObject in some other object
-					// In this case, we have to keep it since it may be referenced by a /TPLx construct from within 
+					// In this case, we have to keep it since it may be referenced by a /TPLx construct from within
 					// another text object
 					if  ( $text_data )
 						$this -> PageMap -> AddTemplateObject ( $object_number, $text_data ) ;
@@ -1249,10 +1263,10 @@ class  PdfToText 	extends PdfObjectBase
 			// Checks if this page is selected
 			if  ( ! $this -> IsPageSelected ( $page_number ) )
 				continue ;
-				
+
 			$this -> Pages [ $page_number ]		=  '' ;
 
-			foreach  ( $page_objects  as  $page_object ) 
+			foreach  ( $page_objects  as  $page_object )
 			   {
 				if  ( isset ( $text [ $page_object ] ) )
 				   {
@@ -1299,27 +1313,27 @@ class  PdfToText 	extends PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        GetPageFromOffset - Returns a page number from a text offset.
-	
+
 	    PROTOTYPE
 	        $offset		=  $pdf -> GetPageFromOffset ( $offset ) ;
-	
+
 	    DESCRIPTION
 	        Given a byte offset in the Text property, returns its page number in the pdf document.
-	
+
 	    PARAMETERS
 	        $offset (integer) -
 	                Offset, in the Text property, whose page number is to be retrieved.
-	
+
 	    RETURN VALUE
 	        Returns a page number in the pdf document, or false if the specified offset does not exist.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	public function  GetPageFromOffset ( $offset )
 	   {
-		if  ( $offset  ===  false ) 
+		if  ( $offset  ===  false )
 			return ( false ) ;
 
 		foreach  ( $this -> PageLocations  as  $page => $location )
@@ -1333,31 +1347,31 @@ class  PdfToText 	extends PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        text_strpos, text_stripos - Search for an occurrence of a string.
-	
+
 	    PROTOTYPE
 	        $result		=  $pdf -> text_strpos  ( $search, $start = 0 ) ;
 	        $result		=  $pdf -> text_stripos ( $search, $start = 0 ) ;
-	
+
 	    DESCRIPTION
 	        These methods behave as the strpos/stripos PHP functions, except that :
 		- They operate on the text contents of the pdf file (Text property)
 		- They return an array containing the page number and text offset. $result [0] will be set to the page
 		  number of the searched text, and $result [1] to its offset in the Text property
-	
+
 	    PARAMETERS
 	        $search (string) -
 	                String to be searched.
 
 		$start (integer) -
 			Start offset in the pdf text contents.
-	
+
 	    RETURN VALUE
 	        Returns an array of two values containing the page number and text offset if the searched string has
 		been found, or false otherwise.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	public function  text_strpos ( $search, $start = 0 )
 	   {
@@ -1384,14 +1398,14 @@ class  PdfToText 	extends PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        document_strpos, document_stripos - Search for all occurrences of a string.
-	
+
 	    PROTOTYPE
 	        $result		=  $pdf -> document_strpos  ( $search, $group_by_page = false ) ;
 	        $result		=  $pdf -> document_stripos ( $search, $group_by_page = false ) ;
-	
+
 	    DESCRIPTION
 		Searches for ALL occurrences of a given string in the pdf document. The value of the $group_by_page
 		parameter determines how the results are returned :
@@ -1406,18 +1420,18 @@ class  PdfToText 	extends PdfObjectBase
 			[ [ 1, 100 ], [ 1, 200 ], [ 3, 157 ] ]
 		- When $group_by_page is true :
 			[ 1 => [ 100, 200 ], 3 => [ 157 ] ]
-	
+
 	    PARAMETERS
 	        $search (string) -
 	                String to be searched.
 
 		$group_by_page (boolean) -
 			Indicates whether the found offsets should be grouped by page number or not.
-	
+
 	    RETURN VALUE
 	        Returns an array of page numbers/character offsets (see Description above) or false if the specified
 		string does not appear in the document.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	public function  document_strpos ( $text, $group_by_page = false )
 	   {
@@ -1472,26 +1486,26 @@ class  PdfToText 	extends PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        text_match, document_match - Search string using regular expressions.
-	
+
 	    PROTOTYPE
 	        $status		=  $pdf -> text_match ( $pattern, &$match = null, $flags = 0, $offset = 0 ) ;
 	        $status		=  $pdf -> document_match ( $pattern, &$match = null, $flags = 0, $offset = 0 ) ;
-	
+
 	    DESCRIPTION
 	        text_match() calls the preg_match() PHP function on the pdf text contents, to locate the first occurrence
 		of text that matches the specified regular expression.
 		document_match() calls the preg_match_all() function to locate all occurrences that match the specified
 		regular expression.
-		Note that both methods add the PREG_OFFSET_CAPTURE flag when calling preg_match/preg_match_all so you 
+		Note that both methods add the PREG_OFFSET_CAPTURE flag when calling preg_match/preg_match_all so you
 		should be aware that all captured results are an array containing the following entries :
 		- Item [0] is the captured string
 		- Item [1] is its text offset
 		- The text_match() and document_match() methods add an extra array item (index 2), which contains the
 		  page number where the matched text resides
-	
+
 	    PARAMETERS
 	        $pattern (string) -
 	                Regular expression to be searched.
@@ -1504,17 +1518,17 @@ class  PdfToText 	extends PdfObjectBase
 
 		$offset (integer) -
 			Start offset. See preg_match/preg_match_all.
-	
+
 	    RETURN VALUE
 	        Returns the number of matched occurrences, or false if the specified regular expression is invalid.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	public function  text_match ( $pattern, &$match = null, $flags = 0, $offset = 0 )
 	   {
 		$local_match	=  null ;
 		$status		=  preg_match ( $pattern, $this -> Text, $local_match, $flags | PREG_OFFSET_CAPTURE, $offset ) ;
 
-		if  ( $status ) 
+		if  ( $status )
 		   {
 			foreach  ( $local_match  as  &$entry )
 				$entry [2]	=  $this -> GetPageFromOffset ( $entry [1] ) ;
@@ -1531,7 +1545,7 @@ class  PdfToText 	extends PdfObjectBase
 		$local_matches	=  null ;
 		$status		=  preg_match_all ( $pattern, $this -> Text, $local_matches, $flags | PREG_OFFSET_CAPTURE, $offset ) ;
 
-		if  ( $status ) 
+		if  ( $status )
 		   {
 			foreach  ( $local_matches  as  &$entry )
 			   {
@@ -1559,19 +1573,19 @@ class  PdfToText 	extends PdfObjectBase
 	 **************************************************************************************************************/
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        AddImage - Adds an image from the PDF stream to the current object.
-	
+
 	    PROTOTYPE
 	        $this -> AddImage ( $object_id, $stream_data, $type, $object_data ) ;
-	
+
 	    DESCRIPTION
 	        Adds an image from the PDF stream to the current object.
 		If the PDFOPT_GET_IMAGE_DATA flag is enabled, image data will be added to the ImageData property.
 		If the PDFOPT_DECODE_IMAGE_DATA flag is enabled, a jpeg resource will be created and added into the
 		Images array property.
-	
+
 	    PARAMETERS
 	        $object_id (integer) -
 	                Pdf object id.
@@ -1581,14 +1595,14 @@ class  PdfToText 	extends PdfObjectBase
 
 		$type (integer) -
 			One of the PdfToText::PDF_*_ENCODING constants.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	protected function  AddImage ( $object_id, $stream_data, $type, $object_data )
 	   {
 
 		if  ( self::$DEBUG  &&   $this -> Options  &  self::PDFOPT_GET_IMAGE_DATA )
 		    {
-			switch  ( $type )  
+			switch  ( $type )
 			   {
 				case	self::PDF_DCT_ENCODING :
 					$this -> ImageData	=  array ( 'type' => 'jpeg', 'data' => $stream_data ) ;
@@ -1614,7 +1628,7 @@ class  PdfToText 	extends PdfObjectBase
 
 					$image -> SaveAs ( $output_filename, $this -> ImageAutoSaveFormat ) ;
 					unset ( $image ) ;
-					
+
 					$this -> AutoSavedImageFiles []		=  $output_filename ;
 				    }
 				// Otherwise, simply store the image data into memory
@@ -1826,16 +1840,16 @@ class  PdfToText 	extends PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        DecodeImage - Returns decoded image contents.
-	
+
 	    PROTOTYPE
 	        TBC
-	
+
 	    DESCRIPTION
 	        description
-	
+
 	    PARAMETERS
 	        $object_id (integer) -
 	                Pdf object number.
@@ -1849,14 +1863,14 @@ class  PdfToText 	extends PdfObjectBase
 		$autosave (boolean) -
 			When autosave is selected, images will not be decoded into memory unless they have a format
 			different from JPEG. This is intended to save memory.
-	
+
 	    RETURN VALUE
 	        Returns an object of type PdfIMage, or false if the image encoding type is not currently supported.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	protected function  DecodeImage ( $object_id, $stream_data, $type, $object_data, $autosave )
 	   {
-		switch  ( $type )  
+		switch  ( $type )
 		   {
 			// Normal JPEG image
 			case	self::PDF_DCT_ENCODING :
@@ -1885,19 +1899,19 @@ class  PdfToText 	extends PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        DecodeObjectStream - Decodes an object stream.
-	
+
 	    PROTOTYPE
 	        $array	=  $this -> DecodeObjectStream ( $object_id, $object_data ) ;
-	
+
 	    DESCRIPTION
 	        Decodes an object stream. An object stream is yet another PDF object type that contains itself several
 		objects not defined using the "x y obj ... endobj" syntax.
-		As far as I understood, object streams data is contained within stream/endstream delimiters, and is 
+		As far as I understood, object streams data is contained within stream/endstream delimiters, and is
 		gzipped.
-		Object streams start with a set of object id/offset pairs separated by a space ; catenated object data 
+		Object streams start with a set of object id/offset pairs separated by a space ; catenated object data
 		immediately follows the last space ; for example :
 
 			1167 0 1168 114 <</DA(/Helv 0 Tf 0 g )/DR<</Encoding<</PDFDocEncoding 1096 0 R>>/Font<</Helv 1094 0 R/ZaDb 1095 0 R>>>>/Fields[]>>[/ICCBased 1156 0 R]
@@ -1909,14 +1923,14 @@ class  PdfToText 	extends PdfObjectBase
 			. Object #1168, which starts at offset #114 and continues until the end of the object stream.
 			  It contains the following data :
 				[/ICCBased 1156 0 R]
-	
+
 	    PARAMETERS
 	        $object_id (integer) -
 	                Pdf object number.
 
 		$object_data (string) -
 			Object data.
-	
+
 	    RETURN VALUE
 	        Returns false if any error occurred (mainly for syntax reasons).
 		Otherwise, returns an associative array containing the following elements :
@@ -1928,7 +1942,7 @@ class  PdfToText 	extends PdfObjectBase
 		The reason for this format is that it is identical to the array returned by the preg_match() function
 		used in the Load() method for finding objects in a PDF file (ie, a regex that matches "x y oj/endobj"
 		constructs).
-		
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	protected function  DecodeObjectStream ( $object_id, $object_data )
 	   {
@@ -1984,7 +1998,7 @@ class  PdfToText 	extends PdfObjectBase
 			$offset		=  ( integer ) $series [$i+1] ;
 
 			// If there is a "next" object, extract only a substring within the object stream contents
-			if  ( isset ( $series [ $i + 3 ] ) ) 
+			if  ( isset ( $series [ $i + 3 ] ) )
 				$object_contents	=  substr ( $data, $offset, $series [ $i + 3 ] - $offset ) ;
 			// Otherwise, extract everything until the end
 			else
@@ -1999,58 +2013,58 @@ class  PdfToText 	extends PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        Decrypt - Decrypts object data.
-	
+
 	    PROTOTYPE
 	        $data		=  $this -> Decrypt ( $object_id, $object_data ) ;
-	
+
 	    DESCRIPTION
 	        Decrypts object data, when the PDF file is password-protected.
-	
+
 	    PARAMETERS
 	        $object_id (integer) -
 	                Pdf object number.
 
 		$object_data (string) -
 			Object data.
-		
+
 	    RETURN VALUE
 	        Returns the decrypted object data, or false if the encrypted object could not be decrypted.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
-	protected function  Decrypt ( $object_id, $object_data ) 
+	protected function  Decrypt ( $object_id, $object_data )
 	   {
 		return ( false ) ;
 	    }
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        ExtractTextData - Extracts text, header & footer information from a text object.
-	
+
 	    PROTOTYPE
 	        $this -> ExtractTextData ( $object_id, $stream_contents, &$text, &$header, &$footer ) ;
-	
+
 	    DESCRIPTION
 	        Extracts text, header & footer information from a text object. The extracted text contents will be
 		stripped from any header/footer information.
-	
+
 	    PARAMETERS
 	        $text (string) -
 	                Variable that will receive text contents.
 
 		$header, $footer (string) -
 			Variables that will receive header and footer information.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	protected function  ExtractTextData ( $object_id, $stream_contents, &$text, &$header, &$footer )
 	   {
 		// Normally, a header or footer is introduced with a construct like :
 		//	<< /Type /Pagination ... [/Bottom] ... >> (or [/Top]
-		// The initial regular expression was : 
+		// The initial regular expression was :
 		//	<< .*? \[ \s* / (?P<location> (Bottom) | (Top) ) \s* \] .*? >> \s* BDC .*? EMC
 		// (the data contained between the BDC and EMC instructions are text-drawing instructions).
 		// However, this expression revealed to be too greedy and captured too much data ; in the following example :
@@ -2058,18 +2072,18 @@ class  PdfToText 	extends PdfObjectBase
 		// everything was captured, from the initial "<<M/MCID 0>>" to the final "EMC", which caused regular page contents to be interpreted as page bottom
 		// contents.
 		// The ".*?" in the regex has been replaced with "[^>]*?", which works better. However, it will fail to recognize header/footer contents if
-		// the header/footer declaration contains a nested construct , such as : 
+		// the header/footer declaration contains a nested construct , such as :
 		//	<< /Type /Pagination ... [/Bottom] ... << (some nested contents) >> ... >> (or [/Top]
 		// Let's wait for the case to happen one day...
 		static		$header_or_footer_re	=  '#
-								(?P<contents> 
+								(?P<contents>
 									<< [^>]*? \[ \s* / (?P<location> (Bottom) | (Top) ) \s* \] [^>]*? >> \s*
 									BDC .*? EMC
 								 )
 							    #imsx' ;
 
 		$header		=
-		$footer		=  
+		$footer		=
 		$text		=  '' ;
 
 		if  ( preg_match_all ( $header_or_footer_re, $stream_contents, $matches, PREG_OFFSET_CAPTURE ) )
@@ -2102,7 +2116,7 @@ class  PdfToText 	extends PdfObjectBase
 
 	    PARAMETERS
 		$page_number (integer) -
-			¨Page number that contains the text to be extracted.
+			ï¿½Page number that contains the text to be extracted.
 
 	    	$object_id (integer) -
 	    		Object id of this text block.
@@ -2227,12 +2241,12 @@ class  PdfToText 	extends PdfObjectBase
 						//	$result		.=  $this -> Separator ;
 
 						$discard_last_instruction	=  true ;
-						$extra_newlines			=  0 ; 
+						$extra_newlines			=  0 ;
 						$use_same_line			=  ( ( $last_relative_goto_y - abs ( $instruction  [ 'y' ] ) )  <=  $current_font_size ) ;
 						$last_relative_goto_y		=  abs ( $instruction [ 'y' ] ) ;
 						$last_goto_x			=  $instruction [ 'x' ] ;
-						
-						if  ( - $instruction [ 'y' ]  >  $current_font_size ) 
+
+						if  ( - $instruction [ 'y' ]  >  $current_font_size )
 						   {
 							$use_same_line		=  false ;
 
@@ -2241,12 +2255,12 @@ class  PdfToText 	extends PdfObjectBase
 							else
 								$extra_newlines		=  0 ;
 						    }
-						else if  ( ! $instruction [ 'y' ] ) 
+						else if  ( ! $instruction [ 'y' ] )
 						   {
 							$use_same_line		=  true ;
 							$extra_newlines		=  0 ;
 						    }
-							
+
 						break ;
 					    }
 					else
@@ -2339,7 +2353,7 @@ class  PdfToText 	extends PdfObjectBase
 			   			$extra_newlines		 =  0 ;
 						$needs_separator	 =  false ;
 			   		    }
-					else 
+					else
 						$needs_separator	=  true ;
 
 					// Add a separator if necessary
@@ -2371,7 +2385,7 @@ class  PdfToText 	extends PdfObjectBase
 
 			   			   	// Characters are encoded within angle brackets ( "<>" ).
 							// Note that several characters can be specified within the same angle brackets, so we have to take
-							// into account the width we detected in the begincodespancerange construct 
+							// into account the width we detected in the begincodespancerange construct
 			   			   	if  ( $is_hex )
 			   			   	   {
 			   			   	   	for  ( $i = 1 ; $i  <  $length ; $i += $current_font_map_width )
@@ -2418,7 +2432,7 @@ class  PdfToText 	extends PdfObjectBase
 									   {
 										$ch	=  $text [ $i + 2 ] ;
 
-										switch ( $ch ) 
+										switch ( $ch )
 										   {
 											// Normally, only a few characters should be escaped...
 											case	'('	:  $newchar =  "("  ; break ;
@@ -2469,7 +2483,7 @@ class  PdfToText 	extends PdfObjectBase
 											// the character width for the current font (if the character width is 4 hex digits, then we
 											// will encounter constructs such as "\000\077").
 											// The method used here is dirty : we build a regex to match octal character representations on a substring
-											// of the text 
+											// of the text
 											default :
 												$width		=  $current_font_map_width / 2 ;	// Convert to byte count
 												$subtext	=  substr ( $text, $i - 1 ) ;
@@ -2482,7 +2496,7 @@ class  PdfToText 	extends PdfObjectBase
 													$octal_values	=  explode ( '\\', substr ( $octal_matches [0], 1 ) ) ;
 													$ord		=  0 ;
 
-													foreach  ( $octal_values  as  $octal_value ) 
+													foreach  ( $octal_values  as  $octal_value )
 														$ord	=  ( $ord  <<  8 ) + octdec ( $octal_value ) ;
 
 													$ch	 =  chr ( $ord ) ;
@@ -2865,21 +2879,21 @@ class  PdfToText 	extends PdfObjectBase
 
 				if  ( isset ( $data [ $index ] ) )
 				   {
-		   			if ( ( isset ( self::$CharacterClass [ $ch ]  ) &&  ( self::$CharacterClass [ $ch ] & self::CTYPE_DIGIT ) )  ||  
+		   			if ( ( isset ( self::$CharacterClass [ $ch ]  ) &&  ( self::$CharacterClass [ $ch ] & self::CTYPE_DIGIT ) )  ||
 							$ch  ==  '-'  ||  $ch  ==  '+' )
 		   			   {
 		   				while  ( $index  <  $data_length  &&
-		   						( ( isset ( self::$CharacterClass [ $data [ $index ] ]  ) &&  ( self::$CharacterClass [ $data [ $index ] ] & self::CTYPE_DIGIT )  ||  
+		   						( ( isset ( self::$CharacterClass [ $data [ $index ] ]  ) &&  ( self::$CharacterClass [ $data [ $index ] ] & self::CTYPE_DIGIT )  ||
 									$data [ $index ]  ==  '.' ) ) )
 		   					$value 	.=  $data [ $index ++ ] ;
 		   			    }
-		   			else if  ( ( isset ( self::$CharacterClass [ $ch ] )  &&  ( self::$CharacterClass [ $ch ] & self::CTYPE_ALPHA ) )  ||  
+		   			else if  ( ( isset ( self::$CharacterClass [ $ch ] )  &&  ( self::$CharacterClass [ $ch ] & self::CTYPE_ALPHA ) )  ||
 							$ch  ==  '/' )
 		   			   {
 						$ch	=  $data [ $index ] ;
 
-						while  ( $index  <  $data_length  &&  
-							( ( isset ( self::$CharacterClass [ $ch ] )  &&  ( self::$CharacterClass [ $ch ] & self::CTYPE_ALNUM ) )  ||  
+						while  ( $index  <  $data_length  &&
+							( ( isset ( self::$CharacterClass [ $ch ] )  &&  ( self::$CharacterClass [ $ch ] & self::CTYPE_ALNUM ) )  ||
 								$ch  ==  '*'  ||  $ch  ==  '-'  ||  $ch  ==  '_'  ||  $ch  ==  '.' ) )
 						   {
 							$value 	.=  $ch ;
@@ -2898,19 +2912,19 @@ class  PdfToText 	extends PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        GetTrailerInformation - Retrieves trailer information.
-	
+
 	    PROTOTYPE
 	        $this -> GetTrailerInformation ( $contents ) ;
-	
+
 	    DESCRIPTION
 	        Retrieves trailer information :
 		- Unique file ID
 		- Id of the object containing encryption data, if the PDF file is encrypted
 		- Encryption data
-	
+
 	    PARAMETERS
 	        $contents (string) -
 	                PDF file contents.
@@ -2950,7 +2964,7 @@ class  PdfToText 	extends PdfObjectBase
 			return ;
 
 		$encryption_data	=  $encryption_match [ 'encrypt' ] ;
-		
+
 		// Encryption mode
 		if  ( ! preg_match ( '#/Filter \s* / (?P<mode> \w+)#ix', $encryption_data, $encryption_data_match ) )
 			return ;
@@ -2964,7 +2978,7 @@ class  PdfToText 	extends PdfObjectBase
 			default :
 				if  ( self::$DEBUG  >  1 )
 					error ( new PdfToTextException ( "Unhandled encryption mode '{$encryption_data [ 'mode' ]}'", $encrypt_object_id ) ) ;
-				
+
 		    }
 
 		// Other encryption data
@@ -2980,7 +2994,7 @@ class  PdfToText 	extends PdfObjectBase
 		// Key length (40 bits, if not specified)
 		if  ( preg_match ( '#/Length \s+ (?P<value> \d+)#ix', $encryption_data, $key_length_match ) )
 			$this -> EncryptionKeyLength		=  $key_length_match [ 'value' ] ;
-		else 
+		else
 			$this -> EncryptionKeyLength		=  40 ;
 
 		// Hashed user and owner passwords
@@ -3013,9 +3027,9 @@ class  PdfToText 	extends PdfObjectBase
 	    }
 
 
-	protected function  GenerateEncryptionKey ( ) 
+	protected function  GenerateEncryptionKey ( )
 	   {
-		
+
 		static	$ImplementedAlgorithms		=  array
 		   (
 			'2'	=>  array
@@ -3106,7 +3120,7 @@ class  PdfToText 	extends PdfObjectBase
 
 		// All done, return
 		return ( $md5_hash ) ;
-	    }	
+	    }
 
 /*
 			$tmp = TCPDF_STATIC::_md5_16(TCPDF_STATIC::$enc_padding.$this->encryptdata['fileid']);
@@ -3178,27 +3192,27 @@ static Guchar rc4DecryptByte(Guchar *state, Guchar *x, Guchar *y, Guchar c) {
 */
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        IsRtlCharacter - Checks if a Unicode codepoint belongs to an RTL language.
-	
+
 	    PROTOTYPE
 	        $status		=  $this -> IsRtlCharacter ( $ch ) ;
-	
+
 	    DESCRIPTION
 	        Checks if a Unicode codepoint belongs to an RTL language.
-		For performance reasons, this function operates on as few character ranges as possible. For this reason, 
+		For performance reasons, this function operates on as few character ranges as possible. For this reason,
 		it may return true even if the specified codepoint does not have any character mapped to it.
-	
+
 	    PARAMETERS
 	        $ch (integer) -
 	                Unicode codepoint to be checked.
-	
+
 	    RETURN VALUE
 	        Returns true if the specified Unicode codepoint belongs to an RTL language, false otherwise.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
-	protected function  IsRtlCharacter ( $ch ) 
+	protected function  IsRtlCharacter ( $ch )
 	   {
 		if  ( isset ( $this -> RtlCharacterBuffer [ $ch ] ) )
 			return ( $this -> RtlCharacterBuffer [ $ch ] ) ;
@@ -3270,7 +3284,7 @@ static Guchar rc4DecryptByte(Guchar *state, Guchar *x, Guchar *y, Guchar c) {
 	   {
 		$length 	=  strlen ( $array ) - 1 ;
 		$result 	=  array ( ) ;
-		$offsets	=  array ( ) ; 
+		$offsets	=  array ( ) ;
 
 		for  ( $i = 1 ; $i  <  $length ; $i ++ )	// Start with character right after the opening bracket
 		   {
@@ -3284,7 +3298,7 @@ static Guchar rc4DecryptByte(Guchar *state, Guchar *x, Guchar *y, Guchar c) {
 			   {
 				$value	=  '' ;
 
-				while  ( $i  <  $length  &&  ( ( $array [$i]  >=  '0'  &&  $array [$i]  <=  '9' )  ||  
+				while  ( $i  <  $length  &&  ( ( $array [$i]  >=  '0'  &&  $array [$i]  <=  '9' )  ||
 						$array [$i]  ==  '-'  ||  $array [$i]  ==  '+'  ||  $array [$i]  ==  '.' ) )
 					$value	.=  $array [$i++] ;
 
@@ -3326,7 +3340,7 @@ static Guchar rc4DecryptByte(Guchar *state, Guchar *x, Guchar *y, Guchar c) {
 	//	Returns an array of character ordinals if the $as_array parameter is true, or a string if false.
 	private function  __extract_chars_from_block ( $text, $start_index = false, $length = false, $as_array = false )
 	   {
-		if  ( $as_array ) 
+		if  ( $as_array )
 			$result		=  array ( ) ;
 		else
 			$result		=  '' ;
@@ -3391,7 +3405,7 @@ static Guchar rc4DecryptByte(Guchar *state, Guchar *x, Guchar *y, Guchar c) {
 
 	// __get_character_padding :
 	//	If the offset specified between two character groups in an array notation for displaying text is less
-	//	than -MinSpaceWidth thousands of text units, 
+	//	than -MinSpaceWidth thousands of text units,
 	private function  __get_character_padding ( $char_offset )
 	   {
 		if  ( $char_offset  <=  - $this -> MinSpaceWidth )
@@ -3409,7 +3423,7 @@ static Guchar rc4DecryptByte(Guchar *state, Guchar *x, Guchar *y, Guchar c) {
 				else
 					$padding	=  $this -> Separator ;
 				}
-			else 
+			else
 				$padding	=  $this -> Separator ;
 
 			return ( utf8_encode ( $this -> Unescape ( $padding ) ) ) ;
@@ -3459,7 +3473,7 @@ static Guchar rc4DecryptByte(Guchar *state, Guchar *x, Guchar *y, Guchar c) {
 			$ch	=  $template [ ++ $i ] ;
 
 			// Percent sign found : check the character after
-			switch  ( $ch ) 
+			switch  ( $ch )
 			   {
 				// "%%" : Replace it with a single percent
 				case	'%' :
@@ -3528,7 +3542,7 @@ static Guchar rc4DecryptByte(Guchar *state, Guchar *x, Guchar *y, Guchar c) {
 		else
 			$result		=  $template ;
 
-		// All done, return 
+		// All done, return
 		return ( $result ) ;
 	    }
 
@@ -3559,56 +3573,56 @@ static Guchar rc4DecryptByte(Guchar *state, Guchar *x, Guchar *y, Guchar c) {
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        IsPageSelected - Checks if a page is selected for output.
-	
+
 	    PROTOTYPE
 	        $status		=  $this -> IsPageSelected ( $page ) ;
-	
+
 	    DESCRIPTION
 	        Checks if the specified page is to be selected for output.
-	
+
 	    PARAMETERS
 	        $page (integer) -
 	                Page to be checked.
-	
+
 	    RETURN VALUE
 	        True if the page is to be selected for output, false otherwise.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	protected function  IsPageSelected ( $page )
 	   {
 		if  ( ! $this -> MaxSelectedPages )
 			return ( true ) ;
-		
+
 		if  ( $this -> MaxSelectedPages  >  0 )
 			return  ( $page  <=  $this -> MaxSelectedPages ) ;
 
-		// MaxSelectedPages  <  0 
+		// MaxSelectedPages  <  0
 		return ( $page  >  count ( $this -> PageMap -> Pages ) + $this -> MaxSelectedPages ) ;
 	    }
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        PeekAuthorInformation - Gets author information from the specified object data.
-	
+
 	    PROTOTYPE
 	        $this -> PeekAuthorInformation ( $object_id, $object_data ) ;
-	
+
 	    DESCRIPTION
-	        Try to check if the specified object data contains author information (ie, the /Author, /Creator, 
+	        Try to check if the specified object data contains author information (ie, the /Author, /Creator,
 		/Producer, /ModDate, /CreationDate keywords) and sets the corresponding properties accordingly.
-	
+
 	    PARAMETERS
 	    	$object_id (integer) -
 	    		Object id of this text block.
 
 	    	$object_data (string) -
 	    		Stream contents.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	protected function  PeekAuthorInformation ( $object_id, $object_data )
 	   {
@@ -3616,13 +3630,13 @@ static Guchar rc4DecryptByte(Guchar *state, Guchar *x, Guchar *y, Guchar c) {
 						(?P<info>
 							/
 							(?P<keyword> [^ (<]+)
-							\s* 
+							\s*
 							(?P<opening> [(<])
 						)
 					    #imsx' ;
 
 		// To execute faster, run the regular expression only if the object data contains a /Author keyword
-		if  ( ( strpos  ( $object_data, '/Author' )  !==  false  ||  strpos ( $object_data, '/CreationDate' )  !==  false )  &&  
+		if  ( ( strpos  ( $object_data, '/Author' )  !==  false  ||  strpos ( $object_data, '/CreationDate' )  !==  false )  &&
 				preg_match_all ( $re, $object_data, $matches, PREG_OFFSET_CAPTURE ) )
 		   {
 			for  ( $i = 0, $count = count ( $matches [ 'keyword' ] ) ; $i  <  $count ; $i ++ )
@@ -3630,7 +3644,7 @@ static Guchar rc4DecryptByte(Guchar *state, Guchar *x, Guchar *y, Guchar c) {
 				$keyword	=  $matches [ 'keyword' ] [$i] [0] ;
 				$opening	=  $matches [ 'opening' ] [$i] [0] ;
 				$start_index	=  $matches [ 'info' ] [$i] [1] + strlen ( $matches [ 'info' ] [$i] [0] ) ;
-				
+
 				// Text between parentheses : the text is written as is
 				if  ( $opening  ==  '(' )
 				   {
@@ -3658,7 +3672,7 @@ static Guchar rc4DecryptByte(Guchar *state, Guchar *x, Guchar *y, Guchar c) {
 
 				$value		=   $this -> __convert_utf16 ( $this -> __extract_chars_from_block ( $value ) ) ;
 
-				switch ( strtolower ( $keyword ) ) 
+				switch ( strtolower ( $keyword ) )
 				   {
 					case  'author'		:  $this -> Author			=  $value ; break ;
 					case  'creator'		:  $this -> CreatorApplication		=  $value ; break ;
@@ -3727,8 +3741,8 @@ static Guchar rc4DecryptByte(Guchar *state, Guchar *x, Guchar *y, Guchar c) {
 				   	case 	'f' 	:  $result .=  "\f" ; break ;
 				   	case 	'r' 	:  $result .=  "\r" ; break ;
 				   	case 	'n' 	:  $result .=  "\n" ; break ;
-				   	default 	:  
-						// Octal escape notation 
+				   	default 	:
+						// Octal escape notation
 						if  ( $nch  >=  '0'  &&  $nch  <=  '7' )
 						   {
 							$ord	=  ord ( $nch ) - $ord0 ;
@@ -3774,7 +3788,7 @@ class 	PdfTexterFontTable 	extends PdfObjectBase
 	private		$DefaultFont	=  false ;
 	// Font mapping between a font number and an object number
 	private 	$FontMap 	=  array ( ) ;
-	// A character map buffer is used to store results from previous calls to the MapCharacter() method of the 
+	// A character map buffer is used to store results from previous calls to the MapCharacter() method of the
 	// FontTable object. It dramatically reduces the number of calls needed, from one call for each character
 	// defined in the pdf stream, to one call on each DISTINCT character defined in the PDF stream.
 	// As an example, imagine a PDF file that contains 200K characters, but only 150 distinct ones. The
@@ -3829,7 +3843,7 @@ class 	PdfTexterFontTable 	extends PdfObjectBase
 		   {
 			$cmap_id	=  $match [ 'cmap' ] ;
 			$font_type	=  PdfTexterFont::FONT_ENCODING_UNICODE_MAP ;
-		    } 
+		    }
 		// Font has an associated character map (using a cmap id)
 		else if  ( preg_match ( '#/Encoding \s* (?P<cmap> \d+) \s+ \d+ #ix', $font_definition, $match ) )
 		   {
@@ -3844,7 +3858,7 @@ class 	PdfTexterFontTable 	extends PdfObjectBase
 			$font_type	=  PdfTexterFont::FONT_ENCODING_MAC_ROMAN ;
 		else if  ( preg_match ( '#/Encoding \s* /Identity-H#ix', $font_definition ) )
 			$font_type	=  PdfTexterFont::FONT_ENCODING_IDENTITY_H ;
-	
+
 		$this -> Fonts [ $object_id ]	=  new  PdfTexterFont ( $object_id, $cmap_id, $font_type ) ;
 
 		// Arbitrarily set the default font to the first font encountered in the pdf file
@@ -3913,13 +3927,13 @@ class 	PdfTexterFontTable 	extends PdfObjectBase
 
 	// GetFontAttributes -
 	//	Gets the specified font width in hex digits and whether the font has a character map or not.
-	public function  GetFontAttributes ( $page_number, $template, $font, &$font_map_width, &$font_mapped ) 
+	public function  GetFontAttributes ( $page_number, $template, $font, &$font_map_width, &$font_mapped )
 	   {
 		// Font considered as global to the document
 		if  ( isset ( $this -> Fonts [ $font ] ) )
 			$key	=  $font ;
 		// Font not found : try to use the first one declared in the document
-		else 
+		else
 		   {
 			reset ( $this -> Fonts ) ;
 			$key	=  key ( $this -> Fonts ) ;
@@ -4220,12 +4234,12 @@ class  PdfTexterFont		extends PdfObjectBase
 		   {
 			if  ( isset ( self::$WinAnsiCharacterMap [ $ch ] ) )
 				return ( $this -> CodePointToUtf8 ( self::$WinAnsiCharacterMap [ $ch ] ) ) ;
-		    }  
+		    }
 		else if  ( $this -> FontType  ==  self::FONT_ENCODING_MAC_ROMAN )
 		   {
 			if  ( isset ( self::$MacRomanCharacterMap [ $ch ] ) )
 				return ( $this -> CodePointToUtf8 ( self::$MacRomanCharacterMap [ $ch ] ) ) ;
-		    }  
+		    }
 
 		if  ( $return_false_on_failure )
 			return ( false ) ;
@@ -4271,7 +4285,7 @@ abstract class	PdfTexterCharacterMap	extends		PdfObjectBase
 	 *-------------------------------------------------------------------------------------------------------------*/
 	public static function  CreateInstance ( $object_id, $definitions )
 	   {
-		if  ( stripos ( $definitions, 'begincmap'    )  !==  false  ||  
+		if  ( stripos ( $definitions, 'begincmap'    )  !==  false  ||
 		      stripos ( $definitions, 'beginbfchar'  )  !==  false  ||
 		      stripos ( $definitions, 'beginbfrange' )  !==  false )
 			return ( new PdfTexterUnicodeMap ( $object_id, $definitions ) ) ;
@@ -4395,7 +4409,7 @@ class  PdfTexterUnicodeMap 	extends 	PdfTexterCharacterMap
 			foreach  ( $range_matches [ 'ranges' ]  as  $range_list )
 			   {
 				// One day I think that I will find a pdf sample where the definitions are put on the same line...
-				// Until that, consider everything is separated by a newline 
+				// Until that, consider everything is separated by a newline
 			   	$ranges 	=  explode ( "\n", trim ( $range_list ) ) ;
 
 				// Loop through each range definition
@@ -4443,7 +4457,7 @@ class  PdfTexterUnicodeMap 	extends 	PdfTexterCharacterMap
 				   }
 			    }
 
-			// Sort the ranges by their starting offsets 
+			// Sort the ranges by their starting offsets
 			$this -> RangeCount	=  count ( $this -> RangeMap ) ;
 
 			if  ( $this -> RangeCount  >  1 )
@@ -4922,7 +4936,7 @@ class  PdfTexterEncodingMap 	extends  PdfTexterCharacterMap
 		// and use the official Adobe encoding maps when necessary
 		else if  ( isset ( self::$Encodings [ $ord ] [ $this -> Encoding ] ) )
 			$ord	=  self::$Encodings [ $ord ] [ $this -> Encoding ] ;
-		
+
 		return ( $this -> CodePointToUtf8 ( $ord ) ) ;
 	    }
     }
@@ -4951,7 +4965,7 @@ abstract class	PdfTexterCIDMap		extends  PdfTexterCharacterMap
 	   {
 		parent::__construct ( $object_id ) ;
 		$this -> HexCharWidth	=  4 ;
-		
+
 		if  ( isset ( self::$CachedMaps [ $map_name ] ) )
 		   {
 			$map	=  self::$CachedMaps [ $map_name ] [ 'map' ] ;
@@ -4975,7 +4989,7 @@ abstract class	PdfTexterCIDMap		extends  PdfTexterCharacterMap
 		$this -> MapFile	=  $file ;
 		$this -> Map		=  $map ;
 
-		// Since alternate characters can be apparently prefixed by 0x0000 or 0x0001, two calls to the array access operator 
+		// Since alternate characters can be apparently prefixed by 0x0000 or 0x0001, two calls to the array access operator
 		// will be needed to retrieve the exact character in such cases
 		// This is why we have to tell the upper layers not to cache the results
 		$this -> Cache		=  false ;
@@ -5011,7 +5025,7 @@ abstract class	PdfTexterCIDMap		extends  PdfTexterCharacterMap
 
 					if  ( ! PdfToText::$DEBUG )
 						return ( '' ) ;
-					else 
+					else
 						return ( "[UID: $offset]" ) ;
 
 				case	self::ALT_CID :
@@ -5020,7 +5034,7 @@ abstract class	PdfTexterCIDMap		extends  PdfTexterCharacterMap
 					return ( '' ) ;
 
 				default :
-					if  ( $this -> LastAltOffset  ===  false ) 
+					if  ( $this -> LastAltOffset  ===  false )
 						return ( $ch ) ;
 
 					if  ( isset ( $this -> Map [ 'alt' ] [ $this -> LastAltOffset ] [ $offset ] ) )
@@ -5048,7 +5062,7 @@ abstract class	PdfTexterCIDMap		extends  PdfTexterCharacterMap
 		else
 		   {
 			$this -> LastAltOffset	=  false ;
-			
+
 			return ( '' ) ;
 		    }
 	    }
@@ -5067,7 +5081,7 @@ class  PdfTexterIdentityHMap		extends  PdfTexterCIDMap
 	private static		$CIDMap		=  array
 	   (
 		0 => '*0*',				// Seems to be a prefix for accentuated characters
-		1 => '*1*',				// Same 
+		1 => '*1*',				// Same
 		2 => self::UNKNOWN_CID,
 		3 => ' ',
 		4 => self::UNKNOWN_CID,
@@ -5187,12 +5201,12 @@ class  PdfTexterIdentityHMap		extends  PdfTexterCIDMap
 		118 => self::UNKNOWN_CID,
 		119 => self::UNKNOWN_CID,
 		120 => self::UNKNOWN_CID,
-		121 => 'ó',
+		121 => 'ï¿½',
 		122 => self::UNKNOWN_CID,
 		123 => self::UNKNOWN_CID,
-		124 => 'ö',
+		124 => 'ï¿½',
 		125 => self::UNKNOWN_CID,
-		126 => 'ú',
+		126 => 'ï¿½',
 		127 => self::UNKNOWN_CID
 	    ) ;
 
@@ -5221,7 +5235,7 @@ class  PdfTexterIdentityHMap		extends  PdfTexterCIDMap
 
 	Object references are of the form : "x y R", where "x" is the object number.
 
-	Of course, anything can be in any order, otherwise it would not be funny ! Consider the following 
+	Of course, anything can be in any order, otherwise it would not be funny ! Consider the following
 	example :
 
 		(1) 5 0 obj
@@ -5244,7 +5258,7 @@ class  PdfTexterIdentityHMap		extends  PdfTexterCIDMap
 
 	Of course, you cannot rely on the fact that all objects appear in logical order.
 
-	And, of course #2, there may be no page catalog at all ! in such cases, objects containing drawing 
+	And, of course #2, there may be no page catalog at all ! in such cases, objects containing drawing
 	instructions will have to be considered as a single page, whose number will be sequential.
 
 	And, of course #3, as this is the case with the official PDF 1.7 Reference from Adobe, there can be a
@@ -5282,11 +5296,11 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    CONSTRUCTOR
 		Creates a PdfTexterPageMap object. Actually, nothing significant is perfomed here, as this class' goal
 		is to be used internally by PdfTexter.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	public function  __construct ( )
 	   {
@@ -5295,38 +5309,38 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        AddTemplateObject - Adds an object that could be referenced as a template/
-	
+
 	    PROTOTYPE
 	        $pagemap -> AddTemplateObject ( $object_id, $object_text_data ) ;
-	
+
 	    DESCRIPTION
 	        Adds an object that may be referenced as a template from another text object, using the /TPLx notation.
-	
+
 	    PARAMETERS
 	        $object_id (integer) -
 	                Id of the object that may contain a resource mapping entry.
 
 		$object_data (string) -
 			Object contents.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
-	public function  AddTemplateObject ( $object_id, $object_text_data ) 
+	public function  AddTemplateObject ( $object_id, $object_text_data )
 	   {
 		$this -> TemplateObjects [ $object_id ]		=  $object_text_data ;
 	    }
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        GetResourceMappings - Gets resource mappings specified after a /Resources parameter.
-	
+
 	    PROTOTYPE
 	        $result		=  $this -> GetResourceMappings ( $object_id, $object_data, $parameter, $pdf_object_list ) ;
-	
+
 	    DESCRIPTION
 	        Most of the time, objects containing a page description (/Type /Page) also contain a /Resources parameter,
 		which may be followed by one of the following constructs :
@@ -5336,7 +5350,7 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 			/Resources << /Font<</F1 10 0 R ...>> /XObject <</Im0 27 0 R ...>>
 		This method extracts alias/object mappings for the parameter specified by $parameter (it can be for
 		example 'Font' or 'Xobject') and returns these mappings as an associative array.
-	
+
 	    PARAMETERS
 	        $object_id (integer) -
 	                Id of the object that may contain a resource mapping entry.
@@ -5349,17 +5363,17 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 
 		$pdf_object_list (associative array) -
 			Array of object id/object data associations, for all objects defined in the pdf file.
-	
+
 	    RETURN VALUE
 	        The list of resource mappings for the specified parameter, as an associative array, whose keys are the
 		resource aliases and values are the corresponding object ids.
 		The method returns an empty array if the specified object does not contain resource mappings or does
 		not contain the specified parameter.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	protected function  GetResourceMappings ( $object_id, $object_data, $parameter, $pdf_object_list )
 	   {
-		// The /Resources parameter refers to an existing PDF object 
+		// The /Resources parameter refers to an existing PDF object
 		if  ( preg_match ( '#/Resources \s* (?P<object_id> \d+) \s+ \d+ \s+ R#ix', $object_data, $match ) )
 		   {
 			// Return the cached result if the same object has previously been referenced by a /Resources parameter
@@ -5388,7 +5402,7 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 		if  ( preg_match ( "#$parameter \s* << \s* (?P<mappings> .*?) \s* >>#imsx", $data, $match ) )
 		   {
 			preg_match_all ( '# (?P<mapping> / [^\s]+) \s+ (?P<object_id> \d+) \s+ \d+ \s+ R#ix', $match [ 'mappings' ], $matches ) ;
-			
+
 			$mappings	=  array ( ) ;
 
 			// Mapping extraction loop
@@ -5407,16 +5421,16 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        Peek - Peeks page information from a pdf object.
-	
+
 	    PROTOTYPE
 	        $pagemap -> Peek ( ) ;
-	
+
 	    DESCRIPTION
 	        Retrieves page information which can be of type (1), (2) or (3), as described in the class comments.
-	
+
 	    PARAMETERS
 	        $object_id (integer) -
 	                Id of the current pdf object.
@@ -5428,9 +5442,9 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 			Objects defined in the pdf file, as an associative array whose keys are object numbers and
 			values object data.
 			This parameter is used for /Type/Page objects which have a /Resource parameter that references
-			an existing object instead of providing font mappings and other XObject mappings inline, 
+			an existing object instead of providing font mappings and other XObject mappings inline,
 			enclosed within double angle brackets (<< /Font ... >>).
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	public function  Peek ( $object_id, $object_data, $pdf_objects )
 	   {
@@ -5445,7 +5459,7 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 				// Get kid count (knowing that sometimes, it is missing...)
 				preg_match ( '#/Count \s+ (?P<count> \d+)#ix', $object_data, $match ) ;
 				$page_count				=  ( isset ( $match [ 'count' ] ) ) ?  ( integer ) $match [ 'count' ] : false ;
-				
+
 				// Get parent object id
 				preg_match ( '#/Parent \s+ (?P<parent> \d+)#ix', $object_data, $match ) ;
 				$parent					=  ( isset ( $match [ 'parent' ] ) ) ?  ( integer ) $match [ 'parent' ] : false ;
@@ -5455,7 +5469,7 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 					'object'	=>  $object_id,
 					'parent'	=>  $parent,
 					'count'		=>  $page_count,
-					'kids'		=>  $references 
+					'kids'		=>  $references
 				    ) ;
 			    }
 		    }
@@ -5502,29 +5516,29 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        ProcessTemplateReferences - Replace template references with actual text contents.
-	
+
 	    PROTOTYPE
 	        $text		=  $pagemap -> ReplaceTemplateReferences ( $page_number, $text_data ) ;
-	
+
 	    DESCRIPTION
 	        Replaces template references of the form "/TPLx Do" with the actual text contents.
-	
+
 	    PARAMETERS
 	        $page_number (integer) -
 	                Page number of the object that contains the supplied object data.
 
 		$text_data (string)
 			Text drawing instructions that are to be processed.
-	
+
 	    RETURN VALUE
 	        Returns the original text, where all template references have been replaced with the contents of the
 		object they refer to.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
-	public function  ProcessTemplateReferences ( $page_number, $text_data ) 
+	public function  ProcessTemplateReferences ( $page_number, $text_data )
 	    {
 		// Many paranoid checks in this piece of code...
 		if  ( isset ( $this -> Pages [ $page_number ] ) )
@@ -5539,7 +5553,7 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 				   {
 					$template_searches	=  array ( ) ;
 					$template_replacements	=  array ( ) ;
-					
+
 					$this ->  __get_replacements ( $page_contents, $template_searches, $template_replacements ) ;
 					$text_data	=  preg_replace ( $template_searches, $template_replacements, $text_data ) ;
 				    }
@@ -5561,7 +5575,7 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 				$searches []		=  '#(' . $template_name . ' \s+ Do\b )#msx' ;
 				$replacements []	=  '/PDFTOTEXT_TEMPLATE_' . substr ( $template_name, 1 ) . ' ' . $this -> TemplateObjects [ $template_object ] ;
 				$objects_seen []	=  $template_object ;
-			
+
 				if  ( isset ( $this -> PageContents [ $template_object ] ) )
 					$this -> __get_replacements ( $this -> PageContents [ $template_object ], $searches, $replacements, $objects_seen ) ;
 			    }
@@ -5571,17 +5585,17 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        MapObjects - Builds a correspondance between object and page numbers.
-	
+
 	    PROTOTYPE
 	        $pagemap -> MapObjects ( ) ;
-	
+
 	    DESCRIPTION
-	        Builds a correspondance between object and page numbers. The page number corresponding to an object id 
+	        Builds a correspondance between object and page numbers. The page number corresponding to an object id
 		will after that be available using the array notation.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	public function  MapObjects ( $objects )
 	   {
@@ -5614,28 +5628,28 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        MapKids - Establishes a correspondance between page kids and a current page number.
-	
+
 	    PROTOTYPE
 	        $pagemap -> MapObjects ( $catalog, &$page ) ;
-	
+
 	    DESCRIPTION
-	  	Tries to assign a page number to all page description objects that have been collected by the Peek() 
+	  	Tries to assign a page number to all page description objects that have been collected by the Peek()
 		method.
-	  	Also creates the Pages associative array, whose keys are page numbers and whose values are the ids of 
+	  	Also creates the Pages associative array, whose keys are page numbers and whose values are the ids of
 		the objects that the page contains.
-	  
-	    EXAMPLE 
-	  	The following example gives an overview of a possible layout for page catalogs ; it describes which 
-		objects contain	what. 
-	  	Lines starting with "#x", where "x" is a number, stands for a PDF object definition, which will start 
+
+	    EXAMPLE
+	  	The following example gives an overview of a possible layout for page catalogs ; it describes which
+		objects contain	what.
+	  	Lines starting with "#x", where "x" is a number, stands for a PDF object definition, which will start
 		with "x 0 obj" in the PDF file.
-	  	Whenever numbers are referenced (other than those prefixed with a "#"), it means "reference to the 
+	  	Whenever numbers are referenced (other than those prefixed with a "#"), it means "reference to the
 		specified object.
 	  	For example, "54" will refer to object #54, and will be given as "54 0 R" in the PDF file.
-	  	The numbers at the beginning of each line are just "step numbers", which will be referenced in the 
+	  	The numbers at the beginning of each line are just "step numbers", which will be referenced in the
 		explanations after the example :
 
 			(01) #1 : /Type/Catalog /Pages 54
@@ -5653,35 +5667,35 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 			(13)			    -> #42 : page contents
 
 		 Explanations :
-			(01) Object #1 contains the page catalog ; it states that a further description of the page 
+			(01) Object #1 contains the page catalog ; it states that a further description of the page
 			     contents is given by object #54.
 			     Note that it could reference multiple page descriptions, such as : /Pages [54 68 99...]
 			     (although I did not met the case so far)
-			(02) Object #54 in turn says that it as "kids", described by objects #3, #28, #32 and #58. It 
-			     also says that it has 5 pages (/Count parameter) ; but wait... the /Kids parameter references 
-			     4 objects while the /Count parameter states that we have 5 pages : what happens ? we will 
+			(02) Object #54 in turn says that it as "kids", described by objects #3, #28, #32 and #58. It
+			     also says that it has 5 pages (/Count parameter) ; but wait... the /Kids parameter references
+			     4 objects while the /Count parameter states that we have 5 pages : what happens ? we will
 			     discover it in the explanations below.
-			(03) Object #3 states that it is aimed for page description (/Type/Page) ; the page contents 
-			     will be found in object #26, specified after the /Contents parameter. Note that here again, 
-			     multiple objects could be referenced by the /Contents parameter but, in our case, there is 
-			     only one, 26. Object #3 also says that its parent object (in the page catalog) is object 
+			(03) Object #3 states that it is aimed for page description (/Type/Page) ; the page contents
+			     will be found in object #26, specified after the /Contents parameter. Note that here again,
+			     multiple objects could be referenced by the /Contents parameter but, in our case, there is
+			     only one, 26. Object #3 also says that its parent object (in the page catalog) is object
 			     #54, defined in (01).
 			     Since this is the first page we met, it will have page number 1.
 			(04) ... object #26 contains the Postscript instructions to draw page #1
 			(05) Object #28 has the same type as #3 ; its page contents can be located in object #30 (06)
 			     The same applies for object #32 (07), whose page contents are given by object #34 (08).
 			     So, (05) and (07) will be pages 2 and 3, respectively.
-			(09) Now, it starts to become interesting : object #58 does not directly lead to an object 
-			     containing Postscript instructions as did objects #3, #28 and #32 whose parent is #54, but 
-			     to yet another page catalog which contains 2 pages (/Count 2), described by objects #36 and 
+			(09) Now, it starts to become interesting : object #58 does not directly lead to an object
+			     containing Postscript instructions as did objects #3, #28 and #32 whose parent is #54, but
+			     to yet another page catalog which contains 2 pages (/Count 2), described by objects #36 and
 			     #40. It's not located at the same position as object #54 in the hierarchy, so it shows that
 			     page content descriptions can be recursively nested.
 			(10) Object #36 says that we will find the page contents in object #38 (which will be page 4)
-			(12) ... and object #40 says that we will find the page contents in object #42 (and our final 
+			(12) ... and object #40 says that we will find the page contents in object #42 (and our final
 			     page, 5)
 
 	 *-------------------------------------------------------------------------------------------------------------*/
-	protected function  MapKids ( $catalog, &$page ) 
+	protected function  MapKids ( $catalog, &$page )
 	   {
 		$entry		=  $this -> PageKids [ $catalog ] ;
 
@@ -5702,7 +5716,7 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 				else
 				   {
 					$this -> PageContents [ $item ]	[ 'page' ]	=  $page ;
-					$this -> Pages [ $page ]			=  ( isset ( $this -> PageContents [ $item ] [ 'contents' ] ) ) ? 
+					$this -> Pages [ $page ]			=  ( isset ( $this -> PageContents [ $item ] [ 'contents' ] ) ) ?
 												$this -> PageContents [ $item ] [ 'contents' ] : array ( ) ;
 					$page ++ ;
 				    }
@@ -5718,19 +5732,19 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        GetMappedFonts - Retrieves the mapped fonts per page
-	
+
 	    PROTOTYPE
 	        $array	=  $pagemap -> GetMappedFonts ( ) ;
-	
+
 	    DESCRIPTION
 	        Gets the mapped fonts, per page. XObjects are traversed, to retrieved additional font aliases defined
 		by them.
-		This function is used by the PdfTexter class to add additional entries to the FontMap object, 
+		This function is used by the PdfTexter class to add additional entries to the FontMap object,
 		ensuring that each reference to a font remains local to a page.
-	
+
 	    RETURN VALUE
 	        Returns an array of associative arrays which have the following entries :
 		- 'page' :
@@ -5742,7 +5756,7 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 			Font name (eg, "/F1", "/C1_0", etc.).
 		- 'object' :
 			Object defining the font attributes, such as character map, etc.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	public function  GetMappedFonts ( )
 	   {
@@ -5765,12 +5779,12 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 
 					foreach  ( $page_contents [ 'fonts' ]  as  $font_name => $font_object )
 					   {
-						$mapped_fonts []		=  array 
-						   ( 
-							'page'		=>  $current_page, 
+						$mapped_fonts []		=  array
+						   (
+							'page'		=>  $current_page,
 							'xobject-name'	=>  '',
-							'font-name'	=>  $font_name, 
-							'object'	=>  $font_object 
+							'font-name'	=>  $font_name,
+							'object'	=>  $font_object
 						    ) ;
 
 						$associations [ ":$font_name" ]	=  $font_object ;
@@ -5784,12 +5798,12 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 		return ( $mapped_fonts ) ;
 	    }
 
-	
+
 	// __map_recursive -
 	//	Recursively collects font aliases for XObjects.
 	private function  __map_recursive ( $page_number, $xobjects, &$mapped_fonts, &$associations )
 	   {
-		foreach  ( $xobjects  as  $xobject_name => $xobject_value ) 
+		foreach  ( $xobjects  as  $xobject_name => $xobject_value )
 		   {
 			if  ( isset ( $this -> PageContents [ $xobject_value ] ) )
 			   {
@@ -5797,12 +5811,12 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 				   {
 					if  ( ! isset ( $associations [ "$xobject_name:$font_name" ] ) )
 					   {
-						$mapped_fonts []		=  array 
-						   ( 
-							'page'		=>  $page_number, 
-							'xobject-name'	=>  $xobject_name, 
-							'font-name'	=>  $font_name, 
-							'object'	=>  $font_object 
+						$mapped_fonts []		=  array
+						   (
+							'page'		=>  $page_number,
+							'xobject-name'	=>  $xobject_name,
+							'font-name'	=>  $font_name,
+							'object'	=>  $font_object
 						    ) ;
 
 						$associations [ "$xobject_name:$font_name" ]	=  $font_object ;
@@ -5816,30 +5830,30 @@ class  PdfTexterPageMap		extends  PdfObjectBase
 	    }
 
 
-	
+
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        IsValidXObject - Checks if the specified object is a valid XObject.
-	
+
 	    PROTOTYPE
 	        $status		=  $pagemap -> IsValidXObjectName ( $name ) ;
-	
+
 	    DESCRIPTION
 	        Checks if the specified name is a valid XObject defining its own set of font aliases.
-	
+
 	    PARAMETERS
 	        $name (string) -
 	                Name of the XObject to be checked.
-	
+
 	    RETURN VALUE
 	        Returns true if the specified XObject exists and defines its own set of font aliases, false otherwise.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	public function  IsValidXObjectName ( $name )
 	   { return ( isset ( $this -> XObjectNames [ $name ] ) ) ; }
     }
-    
+
 
 /*==============================================================================================================
 
@@ -5847,7 +5861,7 @@ class  PdfTexterPageMap		extends  PdfObjectBase
         Holds image data coming from pdf.
 
   ==============================================================================================================*/
-abstract class  PdfImage			extends  PdfObjectBase 
+abstract class  PdfImage			extends  PdfObjectBase
    {
 	// Image resource that can be used to process image data, using the php imagexxx() functions
 	public		$ImageResource		=  false ;
@@ -5858,10 +5872,10 @@ abstract class  PdfImage			extends  PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    CONSTRUCTOR
 	        Creates a PdfImage object with a resource that can be used with imagexxx() php functions.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	public function  __construct ( $image_data, $no_resource_created = false )
 	   {
@@ -5874,10 +5888,10 @@ abstract class  PdfImage			extends  PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    DESTRUCTOR
 	        Destroys the associated image resource.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	public function  __destruct ( )
 	   {
@@ -5886,17 +5900,17 @@ abstract class  PdfImage			extends  PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        CreateImageResource - creates an image resource from the supplied image data.
-	
+
 	    PROTOTYPE
 	        $resource	=  $this -> CreateImageResource ( $data ) ;
-	
+
 	    DESCRIPTION
 	        Creates an image resource from the supplied image data.
 		Whatever the input format, the internal format will be the one used by the gd library.
-	
+
 	    PARAMETERS
 	        $data (string) -
 	                Image data.
@@ -5906,17 +5920,17 @@ abstract class  PdfImage			extends  PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        DestroyImageResource - Destroys the allocated image resource.
-	
+
 	    PROTOTYPE
 	        $this -> DestroyImageResource ( ) ;
-	
+
 	    DESCRIPTION
-	        Destroys the allocated image resource, using the libgd imagedestroy() function. This method can be 
+	        Destroys the allocated image resource, using the libgd imagedestroy() function. This method can be
 		overridden by derived class if the underlying image resource does not come from the gd lib.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	protected function  DestroyImageResource ( )
 	   {
@@ -5926,27 +5940,27 @@ abstract class  PdfImage			extends  PdfObjectBase
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        SaveAs - Saves the current image to a file.
-	
+
 	    PROTOTYPE
 	        $pdfimage -> SaveAs ( $output_file, $image_type = IMG_JPEG ) ;
-	
+
 	    DESCRIPTION
 	        Saves the current image resource to the specified output file, in the specified format.
-	
+
 	    PARAMETERS
 	        $output_file (string) -
 	                Output filename.
 
 		$image_type (integer) -
 			Output format. Can be any of the predefined php constants IMG_*.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	public function  SaveAs ( $output_file, $image_type = IMG_JPEG )
 	   {
-		if  ( ! $this -> ImageResource ) 
+		if  ( ! $this -> ImageResource )
 		   {
 			if  ( $this -> NoResourceCreated  &&  $image_type  ==  IMG_JPEG )
 				file_put_contents ( $output_file, $this -> ImageData ) ;
@@ -5981,14 +5995,14 @@ abstract class  PdfImage			extends  PdfObjectBase
 
 				imagepng ( $this -> ImageResource, $output_file, 0 ) ;
 				break ;
-				
+
 			case	IMG_WBMP :
 				if  ( ! ( $image_types & IMG_WBMP ) )
 					error ( new PdfToTextException ( "Your current PHP version does not support WBMP images." ) ) ;
 
 				imagewbmp ( $this -> ImageResource, $output_file ) ;
 				break ;
-				
+
 			case	IMG_XPM :
 				if  ( ! ( $image_types & IMG_XPM ) )
 					error ( new PdfToTextException ( "Your current PHP version does not support XPM images." ) ) ;
@@ -6016,7 +6030,7 @@ abstract class  PdfImage			extends  PdfObjectBase
         Handles encoded JPG images.
 
   ==============================================================================================================*/
-class  PdfJpegImage		extends  PdfImage 
+class  PdfJpegImage		extends  PdfImage
    {
 	public function  __construct ( $image_data, $autosave )
 	   {
@@ -6070,7 +6084,7 @@ class  PdfInlinedImage		extends  PdfImage
 	    ) ;
 
 	// Image width and height
-	public		$Width, 
+	public		$Width,
 			$Height ;
 	// Color scheme
 	public		$ColorScheme ;
@@ -6081,16 +6095,16 @@ class  PdfInlinedImage		extends  PdfImage
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        Constructor - Builds an image from the supplied data.
-	
+
 	    PROTOTYPE
 	        $image	=  new  PdfInlinedImage ( $image_data, $width, $height, $bits_per_component, $color_scheme ) ;
-	
+
 	    DESCRIPTION
 	        Builds an image from the supplied data. Checks that the image flags are supported.
-	
+
 	    PARAMETERS
 	        $image_data (string) -
 	                Uncompressed image data.
@@ -6104,12 +6118,12 @@ class  PdfInlinedImage		extends  PdfImage
 		$bits_per_components (integer) -
 			Number of bits per color component.
 
-		$color_scheme (integer) - 
+		$color_scheme (integer) -
 			One of the COLOR_SCHEME_* constants, specifying the initial data format.
-	
+
 	    NOTES
 	        Processed images are always converted to JPEG format.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	public function  __construct ( $image_data, $width, $height, $bits_per_component, $color_scheme )
 	   {
@@ -6135,13 +6149,13 @@ class  PdfInlinedImage		extends  PdfImage
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        CreateInstance - Creates an appropriate instance of a PdfImage class.
-	
+
 	    PROTOTYPE
 	        $image	=  PdfInlinedImage ( $stream_data, $object_data ) ;
-	
+
 	    DESCRIPTION
 	        Creates an instance of either :
 		- A PdfJpegImage class, if the image specifications in $object_data indicate that the compressed stream
@@ -6153,22 +6167,22 @@ class  PdfInlinedImage		extends  PdfImage
 		- Pure JPEG contents
 		- RGB values
 		- CMYK values
-		- Gray scale values (in the current version, the resulting image does not correctly reproduce the 
+		- Gray scale values (in the current version, the resulting image does not correctly reproduce the
 		  initial colors, if interpolation is to be used).
-	
+
 	    PARAMETERS
 	        $stream_data (string) -
 	                Compressed image data.
 
 		$object_data (string) -
 			Object containing the stream data.
-	
+
 	    RETURN VALUE
 	        Returns :
 		- A PdfJpegImage object, if the stream data contains only pure JPEG contents
 		- A PdfInlinedImage object, in other cases.
 		- False if the supplied image data is not currently supported.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
 	public static function  CreateInstance ( $stream_data, $object_data, $autosave )
 	   {
@@ -6247,27 +6261,27 @@ class  PdfInlinedImage		extends  PdfImage
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 	    NAME
 	        CreateImageResource - Creates the image resource.
-	
+
 	    PROTOTYPE
 	        $resource	=  $image -> CreateImageResource ( $image_data ) ;
-	
+
 	    DESCRIPTION
 	        Creates a GD image according to the supplied image data, and the parameters supplied to the class
 		constructor.
-	
+
 	    PARAMETERS
 	        $image_data (string) -
 	                Image to be decoded.
-	
+
 	    RETURN VALUE
 	        Returns a GD graphics resource in true color, or false if there is currently no implemented decoding
 		function for this kind of images.
-	
+
 	 *-------------------------------------------------------------------------------------------------------------*/
-	protected function  CreateImageResource ( $image_data ) 
+	protected function  CreateImageResource ( $image_data )
 	   {
 		$decoder	=  $this -> DecodingFunction ;
 
@@ -6279,7 +6293,7 @@ class  PdfInlinedImage		extends  PdfImage
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 		Decoding functions.
 
 	 *-------------------------------------------------------------------------------------------------------------*/
@@ -6400,7 +6414,7 @@ class  PdfInlinedImage		extends  PdfImage
 
 
 	/*--------------------------------------------------------------------------------------------------------------
-	
+
 		Support functions.
 
 	 *-------------------------------------------------------------------------------------------------------------*/
@@ -6436,7 +6450,7 @@ class  PdfInlinedImage		extends  PdfImage
         Handles encoded CCITT Fax images.
 
   ==============================================================================================================*/
-class  PdfFaxImage		extends  PdfImage 
+class  PdfFaxImage		extends  PdfImage
    {
 	public function  __construct ( $image_data )
 	   {
